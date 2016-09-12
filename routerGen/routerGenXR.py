@@ -1,42 +1,14 @@
 #!/usr/bin/env python      
 
-########## ver 0.5
+######### ver 0.1
 #
-# 0.1 first start
-# 0.2 introduce multiple changes (adjust ldp sync on ospf, auth(), vrf definition, multicast vrf)
-# 0.3 add MDT under AF and --mdt extension to set custom 'mdt default x.x.x.x'
-# 0.4 fix l10 under VRF
-# 0.5 minor changes
-# 0.6 add possibility to auto generate RD (differente than RT for diversity)
-#
+# 0.1 init
+# 
 
-import re, sys, argparse
+import telnetlib, re, sys, getopt, argparse
 from random import randint
 
 from mftlib import minMax, queryWhois, sn, isisRID, ip
-
-def auth(state=False):
-	print
-	if state:
-		print "username cisco password cisco"
-		print ""
-		print "enable password cisco"
-		print ""
-		print "line con 0"
-		print " login local"
-		print " no privilege level 15"
-		print " exec-timeout 10 0"
-		print ""
-	else:
-		print "no username cisco password cisco"
-		print ""
-		print "no enable password cisco"
-		print ""
-		print "line con 0"
-		print " no login local"
-		print " privilege level 15"
-		print " exec-timeout 0 0"
-		print ""
 
 def tuningGlobal():
 	if tuning == True:
@@ -47,20 +19,12 @@ def tuningGlobal():
 
 def Global():
 	print "logging console debugging"
-	print "no ip domain-lookup"
+	print "telnet vrf default ipv4 server max-servers 10"
 	print ""
-	print "line con 0"
-	print " privilege level 15"
-	print " exec-timeout 0 0"
-	print ""
-	# print "ip bgp new-format"
-	# print ""
 
 def tuningInt():
 	if tuning == True:
 		print " carrier-delay msec 0"
-		if bfd == True:
-			print " bfd int 100 min 100 mult 3"
 		
 def tuningRouting():
 	if tuning == True:
@@ -82,69 +46,140 @@ def tuningRouting():
 			print " passive-interface lo0"
 		
 def mplsGlobal():
-	print "ip cef"
 	if mpls == True:
-		print "mpls ip"
-		print "mpls ldp router-id l0 force"
-		print "mpls label protocol ldp"
-		if te == True:
-			print "mpls traffic-eng tunnel"
-		print "mpls label range " + hostNum + "000 " + hostNum + "999"
-		print
-		if igp == "ospf":
-			print "mpls ldp igp sync holddown 10000"
+		print "mpls ldp "
+		print " router-id " + hostNum + "." + hostNum + "." + hostNum + "." + hostNum
+		for i in range(lengh):
+			if hostNum == intf[i]:
+				continue	 
 		
+			mini, maxi = minMax(hostNum,intf[i])
+		
+			print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+			print " !"
+		print " "
+		print "mpls label range 10" + hostNum + "000 10" + hostNum + "999"
+		print " "
+
 def vrf(name, rd, rt):
 	print 
-	print "vrf definition " + name
-	print " rd " + rd
-	print " address-family ipv4"
-	if multicast:
-		if mdt != '':
-			print "  mdt default " + mdt
-			print "  bgp next-hop l0"
-	print "  route-target export " + rt
-	print "  route-target import " + rt
+	print "vrf " + name
+	print " address-family ipv4 unicast"
+	print "  export route-target " + rt
+	print "  import route-target " + rt
 	if ipv6:
-		print " address-family ipv6"
-		print "  route-target export " + rt
-		print "  route-target import " + rt
+		print "  !"
+		print "  address-family ipv6 unicast"
+		print "   export route-target " + rt
+		print "   import route-target " + rt
 	print ""
 
-def mplsInt():
+def teGlobal():
 	if mpls == True:	
-		 print " mpls ip"
 		 if te == True:
-			 print " mpls traffic-eng tunnel"
-			 print " ip rsvp bandwidth " + rsvp
-
-def pimInt():
-	print " ip pim sparse-mode"	 
-
-def ipv6Global():
-	if ipv6 == True:
-		print ""
-		print "ipv6 unicast-routing"
-
-def multicastGlobal(vrf = ''):
-	if vrf == '':
-		print "ip multicast-routing " 
-		print "ip pim rp-address " + rp
-		print 
-	else:
-		print "ip multicast-routing vrf " + vrf 
-		print "ip pim vrf " + vrf + " rp-address " + rp
-		print 
+			 print "mpls traffic-eng "
+			 for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
 		
+				mini, maxi = minMax(hostNum,intf[i])
+		
+				print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+				print " !"
+			 print " "
+			 
+			 print "rsvp"
+			 for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
+		
+				mini, maxi = minMax(hostNum,intf[i])
+		
+				print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+			 	print "  bandwidth " + rsvp
+				print " !"
+			 print " "
+
+def multicastGlobal(vrf):
+
+	if vrf == '':
+		if multicast == True:
+			print "multicast-routing"
+			print " address-family ipv4"
+			for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
+			
+				mini, maxi = minMax(hostNum,intf[i])
+			
+				print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+				print " !"
+			print ""
+			print "router igmp"
+			print "  interface lo0"
+			print "   join-group " + igmp
+			print ""
+			print "router pim"
+			print " address-family ipv4"
+			for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
+			
+				mini, maxi = minMax(hostNum,intf[i])
+			
+				print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+				print " !"
+
+			print " rp-address " + rp
+			print ""
+	else:
+		if multicast == True:
+			print "multicast-routing"
+			print " vrf " + vrf
+			print "  address-family ipv4"
+			if mdt != '':
+				print "  mdt default " + mdt
+				print "  mdt source l0"
+			for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
+			
+				mini, maxi = minMax(hostNum,intf[i])
+			
+				print "  interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+				print "  !"
+			print ""
+			print "router igmp"
+			print "  vrf " + vrf
+			print "  interface lo10"
+			print "   join-group " + igmp
+			print ""
+			print "router pim"
+			print " vrf " + vrf
+			print "  address-family ipv4"
+			for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
+			
+				mini, maxi = minMax(hostNum,intf[i])
+			
+				print "  interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+				print "  !"
+
+			print "  rp-address " + rp
+			print ""
+
+
 def mplsRouting():
 	if mpls == True:
 		if igp == "ospf":
 			print " mpls ldp sync"
 			if te == True:
-				print " mpls traffic-eng area 0"
 				print " mpls traffic-eng router-id l0"
 				if multicast == True:
 					print " mpls traffic-eng multicast-intact"
+				print " area 0"
+				print "  mpls traffic-eng"
 		else:
 			print " mpls ldp sync"
 			if te == True:
@@ -154,7 +189,6 @@ def mplsRouting():
 					print " mpls traffic-eng multicast-intact"
 
 if __name__ == "__main__":
-
 	lengh = None
 	intf = []
 	ospf = "YES"
@@ -163,16 +197,16 @@ if __name__ == "__main__":
 	level = "2"
 	tuning = "YES"
 	
-	#telnet = "no"
-	#ip = "127.0.0.1"
+	# telnet = "no"
+	# ip = "127.0.0.1"
 	
-	parser = argparse.ArgumentParser(description='routeGen.py for automatic generation of IOS configuration')
+	parser = argparse.ArgumentParser(description='routeGenXR.py for automatic generation of IOS XR configuration')
 	parser.add_argument('-r','--router', help='router where config parameters',required=False, default=None)
 	parser.add_argument('-n','--neighbor', help='neighbor(s) of this router, if multiple use comma , eg. 1,2,3', required=False, default=None)
 	
 	parser.add_argument('-6','--ipv6', action='store_true', help='add ipv6 unicast routing',required=False, default=False)
 	
-	parser.add_argument('-i','--interface', help='specify interface media', choices=['e', 'fe', 'gi', 'te'], required=False, default="e")
+	parser.add_argument('-i','--interface', help='specify interface media', choices=['gi', 'te'], required=False, default='gi')
 	parser.add_argument('--int_no', required=False, default="0")
 	
 	parser.add_argument('-I','--igp', help='specify to use ospf or isis as igp', choices=['ospf', 'isis'], required=False, default=None)
@@ -207,9 +241,9 @@ if __name__ == "__main__":
 	interfaceName = args.interface
 	int_no = args.int_no
 	mdt = args.mdt
+
 	
 	if router == None or neighbor == None:
-		#### if no router and neighbor is specified a loop will start to specify dinamically multiple neighbors
 		hostName = raw_input("enter router number: ")
 		
 		while True:
@@ -239,14 +273,14 @@ if __name__ == "__main__":
 	print ""
 	print "conf t"
 	print ""
-
+	
 	lengh = len(intf)
 
 	hostNum = hostName
 	lo = hostNum + "." + hostNum + "." + hostNum + "." + hostNum
 	lo_vrf = "172." + hostNum + "." + hostNum + "." + hostNum
 	lo_csc = "192." + hostNum + "." + hostNum + "." + hostNum
-
+	
 	if igp == None:
 		if args.vrf != None:
 			try:
@@ -268,22 +302,129 @@ if __name__ == "__main__":
 			except:
 				print "invalid sintax: \"VRF,RD\" required" 
 				exit()
-		
+
 	print "hostname R" + hostName
 
 	print ""
-	print "int " + interfaceName + "0/" + int_no
-	print " no shu"
+	print "interface " + interfaceName + "0/0/0/" + int_no
+	print " no shut"
 	
 	print ""
 	tuningGlobal()
 	Global()
-	mplsGlobal()
-	# auth(False)
 	if igp == None:
 		if args.vrf != None:
 			vrf(vrf_name, rd, rt)
-	ipv6Global()
+
+	if args.vrf == None:
+		print "int l0"
+		print " ipv4 add " + lo + "/32"
+		if ipv6 == True:
+			print " ipv6 add 2001::" + lo.replace(".", ":") + "/128"
+		print
+	else:
+		print "interface l10"
+		print " vrf " + vrf_name
+		print " ipv4 add " + lo_vrf + "/32"
+		if ipv6 == True:
+			print " ipv6 add 2001::" + lo_vrf.replace(".", ":") + "/128"
+		
+	print ""
+
+	for i in range(lengh):
+		if hostNum == intf[i]:
+			continue	 
+		
+		mini, maxi = minMax(hostNum,intf[i])
+		
+		print "interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+		print " encapsulation dot1q " + mini + maxi
+		if igp == None:
+			if args.vrf != None:
+				print " vrf " + vrf_name
+		print " ipv4 add 10." + mini + "." + maxi + "." + hostNum + " 255.255.255.0"
+		if ipv6 == True:
+			print " ipv6 add 2001:10:" + mini + ":" + maxi + "::" + hostNum + "/64"
+			print " ipv6 add fe80::10:" + mini + ":" + maxi + ":" + hostNum + " link-local"
+		print 
+
+	if igp == "ospf":
+		print "router ospf abc"
+		print " log adjacency changes"
+		print " router-id " + lo
+		mplsRouting()
+		print " area 0"
+		print "  int l0"
+		print "  !"
+		for i in range(lengh):
+			if hostNum == intf[i]:
+				continue	 
+		
+			mini, maxi = minMax(hostNum,intf[i])
+		
+			print "  interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+			print "   network point-to-point"
+			print "  !"
+			
+		tuningRouting()
+		print ""
+
+		if ipv6 == True:
+			print "router ospfv3 abc"
+			print " log adjacency changes"
+			print " router-id " + lo
+			print " area 0"
+			print "  int l0"
+			print "  !"
+			for i in range(lengh):
+				if hostNum == intf[i]:
+					continue	 
+			
+				mini, maxi = minMax(hostNum,intf[i])
+			
+				print "  interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+				print "   network point-to-point"
+				print "  !"	
+		print ""
+	if igp == "isis":
+		print "router isis abc"
+		print " net 47.000" + area + "." + isisRID(hostNum) + ".00"
+		print " is-type level-" + level
+		mplsRouting()
+		print " address-family ipv4 unicast "
+		print "  metric-style wide"
+		print " !"
+		if ipv6 == True:
+			print " address-family ipv6 unicast"
+			# print "  multi-topology"	
+			print " !"
+		print " interface l0"
+		print "  passive "
+		print "  address-family ipv4 unicast "
+		print "  !"
+		if ipv6 == True:
+			print "  address-family ipv6 unicast"
+			print " !"
+			
+		for i in range(lengh):
+			if hostNum == intf[i]:
+				continue	 
+
+			mini, maxi = minMax(hostNum,intf[i])
+
+			print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+			print "  hello-padding disable"
+			print "  point-to-point"
+			print "  address-family ipv4 unicast "
+			print "   !"
+			if ipv6 == True:
+				print "  address-family ipv6 unicast"
+				print "   !"
+		tuningRouting()
+	
+	print " "
+	mplsGlobal()
+	teGlobal()
 	if multicast == True:
 		if args.vrf != None:
 			multicastGlobal(vrf_name)
@@ -291,89 +432,6 @@ if __name__ == "__main__":
 			multicastGlobal()
 	print
 	
-	if args.vrf == None:
-		print "int l0"
-		print " ip add " + lo + " 255.255.255.255"
-		if ipv6 == True:
-			print " ipv6 add 2001::" + lo.replace(".", ":") + "/128"
-		if igp == "ospf":
-			print " ip ospf 1 a " + area 
-			if ipv6 == True:
-				print " ipv6 ospf 1 a " + area 
-		elif igp == "isis":
-			print " ip router isis"
-			if ipv6 == True:
-				print " ipv6 router isis"
-		if multicast == True:
-			pimInt()
-			print " ip igmp join " + igmp
-		print
-	else:
-		print "int l10"
-		print " vrf forwarding " + vrf_name
-		print " ip add " + lo_vrf + " 255.255.255.255"
-		if ipv6 == True:
-			print " ipv6 add 2001::" + lo_vrf.replace(".", ":") + "/128"
-		if multicast == True:
-			pimInt()
-			print " ip igmp join " + igmp
-		print 
-	
-	for i in range(lengh):
-		if hostNum == intf[i]:
-			continue	 
-		
-		mini, maxi = minMax(hostNum,intf[i])
-		
-		print "interface " + interfaceName + "0/" + int_no + "." + mini + maxi
-		print " enc dot " + mini + maxi
-		if igp == None:
-			if args.vrf != None:
-				print " vrf forwarding " + vrf_name
-		print " ip add 10." + mini + "." + maxi + "." + hostNum + " 255.255.255.0"
-		if ipv6 == True:
-			print " ipv6 add 2001:10:" + mini + ":" + maxi + "::" + hostNum + "/64"
-			print " ipv6 add fe80::10:" + mini + ":" + maxi + ":" + hostNum + " link-local"
-		if igp == "ospf":
-			print " ip ospf 1 a " + area 
-			print " ip ospf network point-to-point"
-			if ipv6 == True:
-				print " ipv6 ospf 1 a " + area 
-				print " ipv6 ospf network point-to-point"
-		elif igp == "isis":
-			print " ip router isis"
-			print " isis network point-to-point"
-			if ipv6 == True:
-				print " ipv6 router isis"
-		tuningInt()
-		mplsInt()
-		if multicast == True:
-			pimInt()
-		print ""
-
-	if igp == "ospf":
-		print "router ospf 1"
-		print " log-adjacency-changes"
-		print " router-id " + lo
-		tuningRouting()
-		mplsRouting()
-		print ""
-
-		if ipv6 == True:
-			print "ipv6 router ospf 1"
-			print " router-id " + lo		
-			print " log-adjacency-changes"
-		print ""
-	elif igp == "isis":
-		print "router isis"
-		print " log-adjacency-changes"
-		print " net 47.000" + area + "." + isisRID(hostNum) + ".00"
-		print " metric-style wide"
-		print " is-type level-" + level
-		tuningRouting()
-		mplsRouting()
-
-		if ipv6 == True:
-			print " address-family ipv6"
-			print "  multi-topology"		
+	print ""
+	print "commit"
 	print ""
