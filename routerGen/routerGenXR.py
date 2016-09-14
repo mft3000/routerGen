@@ -1,11 +1,11 @@
 #!/usr/bin/env python      
 
-######### ver 0.1
+######### ver 0.1 draft
 #
 # 0.1 init
 # 
 
-import telnetlib, re, sys, getopt, argparse
+import re, sys, argparse
 from random import randint
 
 from mftlib import minMax, queryWhois, sn, isisRID, ip

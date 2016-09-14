@@ -18,7 +18,7 @@ ebgp = "None"
 ipv4 = False
 ipv6 = False
 
-def ibgpON(router, list, asn, af, whois):
+def ibgpON(router, neigh_list, asn, af, whois):
     rrc = []
     if bgp == "YES":
         rid = ip(router)
@@ -29,10 +29,10 @@ def ibgpON(router, list, asn, af, whois):
         print " bgp router-id " + rid
         print " no bgp default ipv4"
 
-        if len(list.split(",")) == 1:
+        if len(neigh_list.split(",")) == 1:
 
             if af == 4 or af == 46:
-                rr = ip(list)
+                rr = ip(neigh_list)
                 print " neigh " + rr + " remote-as " + asn
                 print " neigh " + rr + " update-source l0"
                 print " !"
@@ -53,7 +53,7 @@ def ibgpON(router, list, asn, af, whois):
                     print " "
 
             if af == 6 or af == 46:
-                rr = ip_v6(list)
+                rr = ip_v6(neigh_list)
 				
                 print "router bgp " + asn
                 print " neigh " + rr + " remote-as " + asn
@@ -68,11 +68,10 @@ def ibgpON(router, list, asn, af, whois):
 
         else:
 
-            for count in range(0,len(list.split(","))):
-                rrc.append(list.split(",")[count])
+            for neigh in neigh_list.split(','):
 
                 if af == 4 or af == 46:
-                    rrc_add = ip(rrc[count])
+                    rrc_add = ip(neigh)
                     print "router bgp " + asn
                     print " neigh " + rrc_add + " remote-as " + asn
                     print " neigh " + rrc_add + " update-source l0"
@@ -96,7 +95,7 @@ def ibgpON(router, list, asn, af, whois):
                         print " "
 
                 if af == 6 or af == 46:
-                    rrc_add = ip_v6(rrc[count])
+                    rrc_add = ip_v6(neigh)
 					
                     print "router bgp " + asn
                     print " neigh " + rrc_add + " remote-as " + asn
@@ -145,7 +144,7 @@ def ibgpON(router, list, asn, af, whois):
                         print "ipv6 route " + line.strip("route6:          ") + " null0 tag 100"
 
 
-def ebgpON(router, list, asn, af, whois, vrf = ''):
+def ebgpON(router, neigh_list, asn, af, whois, vrf = ''):
 
     rrc = []
     if bgp == "YES":
@@ -158,13 +157,13 @@ def ebgpON(router, list, asn, af, whois, vrf = ''):
         print " no bgp default ipv4"
 
         local = router
-        neigh = list.split(',')[0]
+        neigh = neigh_list.split(',')[0]
 
         mini, maxi = minMax(local,neigh)
 
         if vrf == '':
 			if af == 4 or af == 46:
-				print " neigh 10." + mini + "." + maxi + "." + neigh + " remote-as " + list.split(",")[1]
+				print " neigh 10." + mini + "." + maxi + "." + neigh + " remote-as " + neigh_list.split(",")[1]
 				print " !"
 				print " add ipv4 unicast"
 				print "  network " + rid + " mask 255.255.255.255"
@@ -174,7 +173,7 @@ def ebgpON(router, list, asn, af, whois, vrf = ''):
 
 			if af == 6 or af == 46:
 				print "router bgp " + asn
-				print " neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " remote-as " + list.split(",")[1]
+				print " neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " remote-as " + neigh_list.split(",")[1]
 				print " !"
 				print " add ipv6 unicast"
 				print "  network 2001::" + local + ":" + local + ":" + local + ":" + local + "/128"
@@ -187,7 +186,7 @@ def ebgpON(router, list, asn, af, whois, vrf = ''):
                 print " add ipv4 vrf " + vrf
                 print "  redistribute connected route-map VRF-C-4"
                 print "  redistribute static"
-                print "  neigh 10." + mini + "." + maxi + "." + neigh + " remote-as " + list.split(",")[1]
+                print "  neigh 10." + mini + "." + maxi + "." + neigh + " remote-as " + neigh_list.split(",")[1]
                 print "  neigh 10." + mini + "." + maxi + "." + neigh + " activate"
                 print "  neigh 10." + mini + "." + maxi + "." + neigh + " send-comm both"
                 print "  neigh 10." + mini + "." + maxi + "." + neigh + " as-override"
@@ -203,7 +202,7 @@ def ebgpON(router, list, asn, af, whois, vrf = ''):
                 print " add ipv6 vrf " + vrf
                 print "  redistribute connected route-map VRF-C-6"
                 print "  redistribute static"
-                print "  neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " remote-as " + list.split(",")[1]
+                print "  neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " remote-as " + neigh_list.split(",")[1]
                 print "  neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " activate"
                 print "  neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " send-comm both"
                 print "  neigh 2001:10:" + mini + ":" + maxi + "::" + neigh + " as-override"
