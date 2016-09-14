@@ -1,6 +1,6 @@
 #!/usr/bin/env python      
 
-########## ver 0.5
+########## ver 0.7
 #
 # 0.1 first start
 # 0.2 introduce multiple changes (adjust ldp sync on ospf, auth(), vrf definition, multicast vrf)
@@ -8,6 +8,7 @@
 # 0.4 fix l10 under VRF
 # 0.5 minor changes
 # 0.6 add possibility to auto generate RD (differente than RT for diversity)
+# 0.7 minimal estetic change
 #
 
 import re, sys, argparse
@@ -225,14 +226,14 @@ if __name__ == "__main__":
 			else:
 				break
 				
-		intf.sort()	
 	else:
 			
 		hostName = router
-		list = neighbor
-		for count in range(0,len(list.split(","))):
-			intf.append(list.split(",")[count])
-		intf.sort()
+
+		for neigh in neighbor.split(','):
+			intf.append(neigh)
+
+	intf.sort()
 
 	print ""
 	print "+++++++++"

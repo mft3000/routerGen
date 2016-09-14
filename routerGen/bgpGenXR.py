@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-######### ver 0.1 draft
+######### ver 0.2
 #
 # 0.1 init
+# 0.2 BETA RELEASE advertisment
 #
 
 import re, sys, argparse
@@ -331,6 +332,12 @@ def main():
 	if af == 0:
 		print 'no af specified'
 		exit()
+
+	print "+++++++++"
+	print 
+	print "BETA RELEASE: not already tested"
+	print 
+	print "+++++++++"
 	
 	if ebgp != "None" and ibgp != "None":
 		ibgpON(router,ibgp,asn,af,whois)

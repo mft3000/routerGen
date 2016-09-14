@@ -1,8 +1,9 @@
 #!/usr/bin/env python      
 
-######### ver 0.1 draft
+######### ver 0.2
 #
 # 0.1 init
+# 0.2 BETA RELEASE advertisment
 # 
 
 import re, sys, argparse
@@ -268,11 +269,14 @@ if __name__ == "__main__":
 			intf.append(list.split(",")[count])
 		intf.sort()
 
-	print ""
 	print "+++++++++"
-	print ""
+	print 
+	print "BETA RELEASE: not already tested"
+	print 
+	print "+++++++++"
+	print 
 	print "conf t"
-	print ""
+	print 
 	
 	lengh = len(intf)
 
