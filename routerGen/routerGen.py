@@ -9,6 +9,7 @@
 # 0.5 minor changes
 # 0.6 add possibility to auto generate RD (differente than RT for diversity)
 # 0.7 minimal estetic change
+# 0.8 write done when finish
 #
 
 import re, sys, argparse
@@ -212,7 +213,9 @@ if __name__ == "__main__":
 	if router == None or neighbor == None:
 		#### if no router and neighbor is specified a loop will start to specify dinamically multiple neighbors
 		hostName = raw_input("enter router number: ")
-		
+		print 
+		print "[ Write \'done\' when finish! ]"
+		print
 		while True:
 			num = raw_input("entrer router neighbor: ")
 				

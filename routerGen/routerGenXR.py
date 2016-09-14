@@ -1,9 +1,10 @@
 #!/usr/bin/env python      
 
-######### ver 0.2
+######### ver 0.3
 #
 # 0.1 init
 # 0.2 BETA RELEASE advertisment
+# 0.3 write done when finish
 # 
 
 import re, sys, argparse
@@ -246,7 +247,9 @@ if __name__ == "__main__":
 	
 	if router == None or neighbor == None:
 		hostName = raw_input("enter router number: ")
-		
+		print 
+		print "[ Write \'done\' when finish! ]"
+		print
 		while True:
 			num = raw_input("entrer router neighbor: ")
 				
