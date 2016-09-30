@@ -1,10 +1,11 @@
 #!/usr/bin/env python      
 
-######### ver 0.3
+######### ver 0.4
 #
 # 0.1 init
 # 0.2 BETA RELEASE advertisment
 # 0.3 write done when finish
+# 0.4 fix bug multicastGlobal()
 # 
 
 import re, sys, argparse
@@ -102,7 +103,7 @@ def teGlobal():
 				print " !"
 			 print " "
 
-def multicastGlobal(vrf):
+def multicastGlobal(vrf = ''):
 
 	if vrf == '':
 		if multicast == True:
