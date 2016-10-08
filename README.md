@@ -1,4 +1,10 @@
-how many times did you studied a topic and then you said... 'hey... let's try it on a lab!!' ?
+### changelogs
+
+add XR and NX-OS support!!!
+
+## Introduction 
+
+how many times did you study a topic and then you said... 'hey... let's try it on a lab!!' ?
 and how many times (especially for the difficult topics that require a lot of devices), once you finished to set up the lab you forgot what to do?
 what can we do to solve this problem?
 
@@ -48,7 +54,7 @@ VRF info: (vrf in name/id, vrf out name/id)
   5 10.5.6.6 4 msec 4 msec 3 msec
   6 10.6.7.7 2 msec 2 msec 3 msec
   7 10.7.8.8 3 msec *  2 msec
-		   ^
+           ^
            ^
            ^
            |
@@ -97,13 +103,13 @@ and this only that the starting point of our lab!
 
 next step is decide how logically interconnect the devices... let's draw our topology :)
 ```
-													                           PE                  AS65535
+												PE                  AS65535
                        +------------+         +------------+         +------------+
                        |            |         |            |         |            |
                        |     R4     |  +---+  |     R3     |  +---+  |     R5     |
                        |            |         |            |   RED   |            |
                        +------+-----+         +------+-----+         +------------+
-                              |                      |					         	CE
+                              |                      |					CE
                               |         AS1234       |
                               |                      |
       CE                      |                      |
@@ -112,7 +118,7 @@ next step is decide how logically interconnect the devices... let's draw our top
 |     R6     |  +---+  |     R1     |  +---+  |     R2     |  +---+  |     R7     |
 |            |   RED   |            |         |            |         |            |
 +------------+         +------------+         +------------+         +------------+
-		AS65535					         PE 			           		ASBR			           ASBR 174  
+	AS65535						PE					ASBR         	ASBR 174  
 ```
 and we can try to generate code:
 ```
@@ -143,10 +149,28 @@ interface e0/0.12
  enc dot 12
  ip add 10.1.2.1 255.255.255.0
 ```
-this the base generated config with no features configured... let's see what we can do:
+
+this the base generated config with no features configured.
+
+## routerGen.py and bgpGen.py
+
+inside main directory you can find many different scripts. The First difference is what configure:
+
+- routerGen.py will generate main device configuration
+- bgpGen.py will generate BGP protocol configuration
+
+inside directory you can find other scripts to be used for different cisco os
+
+Main Config | BGP Config | Os
+----------- | ---------- | ------------
+routerGen.py | bgpGen.py | IOS
+routerGenXR.py | bgpGenXR.py | IOS XR
+routerGenNX.py | (to be release) | IOS NX-OS
+
+here below you can find routerGen (for IOS, XR, NX) brief script extension descriptions:
 
  1. enable IPv6 (addresses are generated with a similar logic than IPv4)
- 2. change interface name and number (instead of default e0/0 you can change and fit configurations to fisical topology o multiple virtual environments. eg. gi0/1)
+ 2. change interface name and number (instead of default e0/0 you can change and fit configurations to fisical topology o multiple virtual environments. eg. gi0/1. this can give you flexibility to change virtual environment like VIRL or GNS without problems)
  3. enable IGP (choose OSPF or ISIS). by default none of these are choosen
  4. insert tuning parameters (carrier-delay, edit igp timers, ecc..)
  5. enable MPLS, TE, RSVP (specify RSVP bandwidth per interface)
@@ -248,6 +272,10 @@ VRF info: (vrf in name/id, vrf out name/id)
   6 10.6.7.7 [MPLS: Labels 7000/8011 Exp 0] 2 msec 2 msec 1 msec
   7 10.8.9.8 [MPLS: Label 8011 Exp 0] 1 msec 1 msec 1 msec
   8 10.8.9.9 2 msec *  3 msec
+  
+```
+this example can easily let you understand the transport label ( x label in x / y traceroute syntax) and how generate the vpn label ( y label in x / y traceroute syntax)
+```
 
 R1#sh mpls forwarding-table 
 Local      Outgoing   Prefix           Bytes Label   Outgoing   Next Hop    
@@ -276,6 +304,7 @@ routerGen -r 3 -n 2,4 -I isis -6 -m -t -M -R 2.2.2.2 -G 239.0.0.1
 routerGen -r 4 -n 1,3 -I isis -6 -m -t -M -R 2.2.2.2 -G 239.0.0.1
 
 ----
+
 ```
 
 at this point we can care about another problem... BGP.
@@ -511,7 +540,7 @@ bgpGen -r 6 -a 174 -4 -e 1,1234 -w
 
 The list of extensions of routerGen is not finished... there are some additional configuration that can be usefull in case of MPLS VPN - PE-CE configurations
 
- 10. VRF NAME: this generate VRF definitions and the interface configuration. if you attach other parameters (like multicast, for mVPN) that may refer to VRF... script will generate VRF based configuration
+ 10. VRF NAME: this generate VRF definitions and the interface configuration. if you attach other parameters (like multicast, for mVPN) that may refer to VRF... script will generate VRF based configuration. 
  11. mdt multicast address under AF: if VRF is set you can choose a MDT default multicast address to support mVPN configuration
 
 here follows an additional configuration to Router 3 in order to set MPLS VPN PE-CE connection with router 5
@@ -621,13 +650,16 @@ bgpGen -r 6 -a 65535 -46 -e 1,12874
 ```
 ----
 
-I hope you can understand the potential of the script (in one hour I lunch up and running a 20 router lab with Inter-AS opt C scenarion, CSC, TE, ecc...) and I sure this can helps in your road to success.
+I hope you can understand the potential of this scripts (in one hour I lunch up and running a 20 router lab with Inter-AS opt C scenarion, CSC, TE, ecc...) and I sure this can helps in your road to success.
 
 
 this code has been written quick and dirty long time ago and now pubblished with new features (vrf, MDT, ecc). is not so good to read but it works.
 with lucky I hope to find some spare time to adapt the code for new enhanceds, like support for additional networking OS's (like XR and NX... work in progress), enter the device and drop the config ecc...
 
-please check also (in the near future on gitHub)
 
-showRunIOU.py: enter inside router (from a device list: R1:localhost:2001), lunch 'term len 0; show run' save and zip device configuration 
+
+please check also (in the future on gitHub)
+
+showRunIOU.py: enter inside router (from a device list: R1:localhost:2001), lunch 'term len 0; show run' save and zip device configuration
+
 ts.py: are you ready for your CCIE Tshoot Lab? really?! why don't you prepare a complex scenario and start to add some random mistakes with this script???
