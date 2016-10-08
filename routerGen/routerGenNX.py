@@ -189,7 +189,7 @@ if __name__ == "__main__":
 	#telnet = "no"
 	#ip = "127.0.0.1"
 	
-	parser = argparse.ArgumentParser(description='routeGen.py for automatic generation of IOS configuration')
+	parser = argparse.ArgumentParser(description='routeGenNX.py for automatic generation of IOS NX-OS configuration')
 	parser.add_argument('-r','--router', help='router where config parameters',required=False, default=None)
 	parser.add_argument('-n','--neighbor', help='neighbor(s) of this router, if multiple use comma , eg. 1,2,3', required=False, default=None)
 	
