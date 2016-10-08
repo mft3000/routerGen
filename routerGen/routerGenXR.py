@@ -1,11 +1,12 @@
 #!/usr/bin/env python      
 
-######### ver 0.4
+######### ver 0.5
 #
 # 0.1 init
 # 0.2 BETA RELEASE advertisment
 # 0.3 write done when finish
 # 0.4 fix bug multicastGlobal()
+# 0.5 fix mpls te under isis
 # 
 
 import re, sys, argparse
@@ -58,8 +59,8 @@ def mplsGlobal():
 		
 			mini, maxi = minMax(hostNum,intf[i])
 		
-			print " interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
-			print " !"
+			print "  interface " + interfaceName + "0/0/0/" + int_no + "." + mini + maxi
+			print "  !"
 		print " "
 		print "mpls label range 10" + hostNum + "000 10" + hostNum + "999"
 		print " "
@@ -184,12 +185,13 @@ def mplsRouting():
 				print " area 0"
 				print "  mpls traffic-eng"
 		else:
-			print " mpls ldp sync"
+			print " address-family ipv4 unicast"
+			print "  mpls ldp sync"
 			if te == True:
-				print " mpls traffic-eng level-" + level
-				print " mpls traffic-eng router-id l0"
+				print "  mpls traffic-eng level-" + level
+				print "  mpls traffic-eng router-id l0"
 				if multicast == True:
-					print " mpls traffic-eng multicast-intact"
+					print "  mpls traffic-eng multicast-intact"
 
 if __name__ == "__main__":
 	lengh = None
